@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Near | Smart Destination Alert</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet & Routing -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .map-layer-control {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 8px;
+        }
+        .layer-btn {
+            background: var(--glass-bg);
+            backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .layer-btn:hover { background: rgba(255,255,255,0.1); }
+        .layer-btn.active { background: var(--primary); border-color: var(--primary); }
+        
+        /* Hide routing container default UI */
+        .leaflet-routing-container { display: none !important; }
+        
+        .btn-exit {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            margin-top: 12px;
+        }
+        .btn-exit:hover { background: rgba(239, 68, 68, 0.25); }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <!-- Map Layer Toggle -->
+    <div class="map-layer-control">
+        <button id="darkLayerBtn" class="layer-btn active">Dark</button>
+        <button id="satLayerBtn" class="layer-btn">Satellite</button>
+    </div>
+
+    <div class="ui-overlay">
+        <!-- Brand Card -->
+        <div class="floating-card">
+            <div class="brand">
+                <div class="brand-icon">📍</div>
+                <div>
+                    <h1>Near Tracker</h1>
+                    <p style="font-size: 0.7rem; color: var(--text-muted);">Real-time Route Navigation</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Setup View -->
+        <div id="setupView" class="floating-card">
+            <span class="section-label">Step 1: Start Location</span>
+            <div id="gpsBox">
+                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <input type="text" id="startSearch" placeholder="Enter starting point..." 
+                        style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; font-size: 0.8rem;">
+                    <button id="startSearchBtn" class="btn btn-primary" style="width: auto; padding: 0 16px;">
+                        🔍
+                    </button>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button id="activateGPS" class="btn btn-outline" style="flex: 1; margin-bottom: 8px;">
+                        <span class="spinner"></span>
+                        <span>📡</span> <span id="gpsBtnText">GPS</span>
+                    </button>
+                    <button id="manualModeBtn" class="btn btn-outline" style="flex: 1; margin-bottom: 8px;">
+                        <span>📍</span> Pin on Map
+                    </button>
+                </div>
+                <div id="gpsHelp" class="help-box">
+                    GPS requires HTTPS or localhost. Using IP fallback.
+                </div>
+            </div>
+
+            <div style="margin: 10px 0; border-top: 1px solid var(--glass-border);"></div>
+
+            <span class="section-label">Step 2: Set Destination</span>
+            
+            <div style="display: flex; gap: 8px; margin-bottom: 4px;">
+                <input type="text" id="destSearch" placeholder="Enter destination name..." 
+                    style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; font-size: 0.8rem;">
+                <button id="searchBtn" class="btn btn-primary" style="width: auto; padding: 0 16px;">
+                    🔍
+                </button>
+            </div>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin: 4px 0 12px 4px;">
+                Tip: You can also <b>tap anywhere on map</b> to pin.
+            </p>
+
+            <div class="location-status">
+                <div class="status-item">
+                    <span class="status-label">Start:</span>
+                    <span id="startName" class="status-value">Not Set</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Dest:</span>
+                    <span id="destName" class="status-value">Tap map...</span>
+                </div>
+            </div>
+
+            <button id="startBtn" class="btn btn-primary" style="margin-top: 20px; background: var(--accent);" disabled>
+                🚀 START NAVIGATION
+            </button>
+        </div>
+
+        <!-- Active View -->
+        <div id="activeView" class="floating-card" style="display: none;">
+            <span class="section-label">Navigating Route</span>
+            
+            <div class="telemetry">
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4px;">
+                    <span id="distText" style="font-size: 1.5rem; font-weight: 800;">0.00 km</span>
+                    <span id="remainText" style="font-size: 0.9rem; color: var(--primary); font-weight: 600;">Calculating...</span>
+                </div>
+                
+                <div class="progress-container">
+                    <div id="pFill" class="progress-bar"></div>
+                </div>
+
+                <div id="warnAlert" class="alert-approaching" style="display: none;">
+                    📳 APPROACHING DESTINATION
+                </div>
+
+                <button id="exitNavBtn" class="btn btn-exit">
+                    <span>🛑</span> EXIT NAVIGATION
+                </button>
+            </div>
+        </div>
+
+        <!-- Reset Button -->
+        <button id="resetBtn" class="btn btn-outline" style="font-size: 0.7rem; padding: 8px; border-radius: 12px; width: auto; align-self: flex-start;">
+            🔄 Factory Reset
+        </button>
+    </div>
+
+    <audio id="alertAudio" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <script>
+        // --- Map Setup ---
+        let darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
+        let satLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}');
+
+        let map = L.map('map', { 
+            zoomControl: false,
+            attributionControl: false,
+            layers: [darkLayer]
+        }).setView([20, 0], 2);
+
+        // --- Layer Toggling ---
+        const darkBtn = document.getElementById('darkLayerBtn');
+        const satBtn = document.getElementById('satLayerBtn');
+
+        darkBtn.onclick = () => {
+            map.removeLayer(satLayer);
+            map.addLayer(darkLayer);
+            darkBtn.classList.add('active');
+            satBtn.classList.remove('active');
+        };
+        satBtn.onclick = () => {
+            map.removeLayer(darkLayer);
+            map.addLayer(satLayer);
+            satBtn.classList.add('active');
+            darkBtn.classList.remove('active');
+        };
+
+        // --- State ---
+        let userPos = null;
+        let destPos = null;
+        let userMarker = null;
+        let destMarker = null;
+        let isManualMode = false;
+        let routingControl = null;
+        let routePath = [];
+
+        // --- Elements ---
+        const startName = document.getElementById('startName');
+        const destName = document.getElementById('destName');
+        const activateGPS = document.getElementById('activateGPS');
+        const gpsHelp = document.getElementById('gpsHelp');
+        const manualModeBtn = document.getElementById('manualModeBtn');
+        const startBtn = document.getElementById('startBtn');
+        const exitNavBtn = document.getElementById('exitNavBtn');
+        const destSearch = document.getElementById('destSearch');
+        const searchBtn = document.getElementById('searchBtn');
+        const startSearch = document.getElementById('startSearch');
+        const startSearchBtn = document.getElementById('startSearchBtn');
+
+        // --- Start Location Search Logic ---
+        startSearchBtn.onclick = async () => {
+            const query = startSearch.value.trim();
+            if (!query) return;
+
+            startSearchBtn.innerHTML = '<span class="spinner" style="display:block"></span>';
+            
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                
+                if (data && data.length > 0) {
+                    const place = data[0];
+                    handleLocationUpdate(parseFloat(place.lat), parseFloat(place.lon), place.display_name.split(',')[0]);
+                } else {
+                    alert("Start location not found.");
+                }
+            } catch (err) {
+                alert("Search failed.");
+            } finally {
+                startSearchBtn.innerHTML = "🔍";
+            }
+        };
+
+        startSearch.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') startSearchBtn.click();
+        });
+
+        // --- Search Logic ---
+        searchBtn.onclick = async () => {
+            const query = destSearch.value.trim();
+            if (!query) return;
+
+            searchBtn.innerHTML = '<span class="spinner" style="display:block"></span>';
+            
+            try {
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+                
+                if (data && data.length > 0) {
+                    const place = data[0];
+                    const pos = { lat: parseFloat(place.lat), lng: parseFloat(place.lon) };
+                    
+                    // Set Destination
+                    destPos = pos;
+                    if (destMarker) map.removeLayer(destMarker);
+                    destMarker = L.marker([pos.lat, pos.lng], { 
+                        icon: L.divIcon({ className: 'dest-marker', iconSize: [28,28] }) 
+                    }).addTo(map);
+                    
+                    destName.innerText = place.display_name.split(',')[0];
+                    map.flyTo([pos.lat, pos.lng], 14);
+                    
+                    if (userPos) calculateRoute();
+                } else {
+                    alert("Place not found. Try a more specific name.");
+                }
+            } catch (err) {
+                alert("Search failed. Check your connection.");
+            } finally {
+                searchBtn.innerHTML = "🔍";
+            }
+        };
+
+        // Allow search on Enter key
+        destSearch.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchBtn.click();
+        });
+
+        // --- GPS Logic ---
+        activateGPS.onclick = () => {
+            activateGPS.classList.add('loading');
+            document.getElementById('gpsBtnText').innerText = "DETECTING...";
+
+            navigator.geolocation.getCurrentPosition((pos) => {
+                handleLocationUpdate(pos.coords.latitude, pos.coords.longitude, "GPS");
+                activateGPS.classList.remove('loading');
+                activateGPS.innerHTML = "✅ GPS ACTIVE";
+                activateGPS.style.background = "rgba(16, 185, 129, 0.2)";
+                activateGPS.disabled = true;
+            }, (err) => {
+                fetch('https://ipapi.co/json/').then(r => r.json()).then(data => {
+                    handleLocationUpdate(data.latitude, data.longitude, "IP Network");
+                    activateGPS.classList.remove('loading');
+                    activateGPS.innerHTML = "✅ IP DETECTED";
+                    activateGPS.disabled = true;
+                }).catch(() => {
+                    activateGPS.classList.remove('loading');
+                    gpsHelp.style.display = 'block';
+                });
+            });
+        };
+
+        manualModeBtn.onclick = () => {
+            isManualMode = !isManualMode;
+            manualModeBtn.classList.toggle('active');
+            manualModeBtn.innerHTML = isManualMode ? "<span>📍</span> TAP MAP NOW" : "<span>📍</span> Pin on Map";
+            document.getElementById('map').style.cursor = isManualMode ? "crosshair" : "grab";
+        };
+
+        // --- Map Interaction & Routing ---
+        map.on('click', (e) => {
+            const pos = { lat: e.latlng.lat, lng: e.latlng.lng };
+            
+            if (isManualMode) {
+                handleLocationUpdate(pos.lat, pos.lng, "Manual Pin");
+                isManualMode = false;
+                manualModeBtn.classList.remove('active');
+                manualModeBtn.innerText = "Change Start Point";
+                document.getElementById('map').style.cursor = "grab";
+            } else {
+                destPos = pos;
+                if (destMarker) map.removeLayer(destMarker);
+                destMarker = L.marker([pos.lat, pos.lng], { 
+                    icon: L.divIcon({ className: 'dest-marker', iconSize: [28,28] }) 
+                }).addTo(map);
+                destName.innerText = "Destination Set";
+                
+                if (userPos) calculateRoute();
+            }
+        });
+
+        function handleLocationUpdate(lat, lng, method) {
+            userPos = { lat, lng };
+            if (userMarker) map.removeLayer(userMarker);
+            userMarker = L.marker([lat, lng], { 
+                icon: L.divIcon({ className: 'pulse-marker', iconSize: [20,20] }) 
+            }).addTo(map);
+            
+            map.flyTo([lat, lng], 15);
+            startName.innerText = method;
+            if (destPos) calculateRoute();
+        }
+
+        function calculateRoute() {
+            if (routingControl) map.removeControl(routingControl);
+
+            routingControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(userPos.lat, userPos.lng),
+                    L.latLng(destPos.lat, destPos.lng)
+                ],
+                routeWhileDragging: false,
+                addWaypoints: false,
+                lineOptions: {
+                    styles: [{ color: '#6366f1', weight: 0, opacity: 0 }] // Line is now invisible
+                },
+                createMarker: () => null // Hide default routing markers
+            }).on('routesfound', (e) => {
+                const routes = e.routes;
+                routePath = routes[0].coordinates;
+                startBtn.disabled = false;
+            }).addTo(map);
+        }
+
+        // --- Journey Execution ---
+        startBtn.onclick = async () => {
+            const response = await fetch('/api/start-journey', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    startCoords: userPos, 
+                    endCoords: destPos,
+                    path: routePath // Send the real road path to server
+                })
+            });
+            
+            if (response.ok) {
+                document.getElementById('setupView').style.display = 'none';
+                document.getElementById('activeView').style.display = 'block';
+                startTracking();
+            }
+        };
+
+        exitNavBtn.onclick = async () => {
+            await fetch('/api/reset', { method: 'POST' });
+            location.reload();
+        };
+
+        function startTracking() {
+            const poll = setInterval(async () => {
+                const res = await fetch('/api/location');
+                const data = await res.json();
+                
+                if (!data.active) return;
+
+                const progress = (data.currentDistance / data.targetDistance * 100);
+                document.getElementById('pFill').style.width = progress + '%';
+                document.getElementById('distText').innerText = data.currentDistance.toFixed(2) + ' km';
+                
+                const remaining = Math.max(0, data.targetDistance - data.currentDistance);
+                document.getElementById('remainText').innerText = remaining.toFixed(2) + ' km left';
+
+                userMarker.setLatLng([data.coordinates.lat, data.coordinates.lng]);
+                map.panTo([data.coordinates.lat, data.coordinates.lng]);
+
+                if (data.vibration && !data.reached) document.getElementById('warnAlert').style.display = 'block';
+
+                if (data.reached) {
+                    document.getElementById('alertAudio').play();
+                    document.getElementById('warnAlert').innerText = "🏁 ARRIVED!";
+                    document.getElementById('warnAlert').style.background = "rgba(16, 185, 129, 0.2)";
+                    document.getElementById('warnAlert').style.color = "#10b981";
+                    clearInterval(poll);
+                }
+            }, 500);
+        }
+
+        document.getElementById('resetBtn').onclick = () => location.reload();
+    </script>
+</body>
+</html>
