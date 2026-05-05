@@ -289,23 +289,19 @@
             activateGPS.classList.add('loading');
             document.getElementById('gpsBtnText').innerText = "DETECTING...";
 
-            navigator.geolocation.getCurrentPosition((pos) => {
-                handleLocationUpdate(pos.coords.latitude, pos.coords.longitude, "GPS");
+            // Hardcoded: Canara Engineering College, Benjanapadav, Mangalore
+            // Fine-tuned: between Kodman Motopark and Ammembal Subba Rao Pai direction
+            setTimeout(() => {
+                const lat = 12.9003;
+                const lng = 74.9860;
+                const locationName = "Canara Engineering College, Mangalore";
+
+                handleLocationUpdate(lat, lng, locationName);
                 activateGPS.classList.remove('loading');
-                activateGPS.innerHTML = "✅ GPS ACTIVE";
+                activateGPS.innerHTML = "✅ LOCATION SET";
                 activateGPS.style.background = "rgba(16, 185, 129, 0.2)";
                 activateGPS.disabled = true;
-            }, (err) => {
-                fetch('https://ipapi.co/json/').then(r => r.json()).then(data => {
-                    handleLocationUpdate(data.latitude, data.longitude, "IP Network");
-                    activateGPS.classList.remove('loading');
-                    activateGPS.innerHTML = "✅ IP DETECTED";
-                    activateGPS.disabled = true;
-                }).catch(() => {
-                    activateGPS.classList.remove('loading');
-                    gpsHelp.style.display = 'block';
-                });
-            });
+            }, 800); // Small delay for realistic feel
         };
 
         manualModeBtn.onclick = () => {
