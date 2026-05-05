@@ -1,0 +1,318 @@
+:root {
+    --primary: #6366f1;
+    --primary-dark: #4f46e5;
+    --accent: #10b981;
+    --bg-dark: #0f172a;
+    --glass-bg: rgba(15, 23, 42, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --text-white: #f8fafc;
+    --text-muted: #94a3b8;
+    --card-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Outfit', 'Plus Jakarta Sans', sans-serif;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-white);
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    position: relative;
+}
+
+#map {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* Floating UI Layout */
+.ui-overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    bottom: 20px;
+    width: 380px;
+    max-width: calc(100% - 40px);
+    z-index: 100;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto; /* Allow scrolling if cards are too tall */
+    padding-right: 10px; /* Space for scrollbar */
+}
+
+/* Custom Scrollbar for a premium feel */
+.ui-overlay::-webkit-scrollbar {
+    width: 4px;
+}
+.ui-overlay::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+.ui-overlay::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
+}
+
+@media (max-width: 480px) {
+    .ui-overlay {
+        left: 10px;
+        right: 10px;
+        top: 10px;
+        bottom: 10px;
+        width: auto;
+        max-width: none;
+    }
+    
+    .floating-card {
+        padding: 16px;
+        border-radius: 20px;
+    }
+}
+
+.floating-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 16px; /* Reduced from 24px */
+    box-shadow: var(--card-shadow);
+    pointer-events: auto;
+}
+
+/* Branding */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-icon {
+    width: 32px; /* Reduced from 40px */
+    height: 32px;
+    background: linear-gradient(135deg, var(--primary), #818cf8);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.brand h1 {
+    font-size: 1rem; /* Reduced from 1.25rem */
+    font-weight: 700;
+    letter-spacing: -0.025em;
+}
+
+/* Controls */
+.section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    display: block;
+}
+
+.btn {
+    width: 100%;
+    padding: 10px; /* Reduced from 14px */
+    border-radius: 12px;
+    border: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(79, 70, 229, 0.4);
+}
+
+.btn-primary:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #475569;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    color: var(--text-white);
+}
+
+.btn-outline:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--text-muted);
+}
+
+.btn-outline.active {
+    border-color: var(--primary);
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary);
+}
+
+/* Status Info */
+.location-status {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 12px; /* Reduced from 16px */
+    margin-top: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+}
+
+.status-item:last-child {
+    margin-bottom: 0;
+}
+
+.status-label {
+    color: var(--text-muted);
+}
+
+.status-value {
+    font-weight: 500;
+}
+
+/* Journey Info */
+.telemetry {
+    margin-top: 10px;
+}
+
+.progress-container {
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 16px 0;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #818cf8);
+    width: 0%;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.alert-approaching {
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    color: #fbbf24;
+    padding: 12px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    animation: pulse-orange 2s infinite;
+}
+
+/* Help Box */
+.help-box {
+    margin-top: 12px;
+    padding: 12px;
+    background: rgba(239, 68, 68, 0.1);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: #f87171;
+    display: none;
+}
+
+/* Animations */
+@keyframes pulse-orange {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.02); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.8; }
+}
+
+/* Leaflet Customization */
+.pulse-marker {
+    width: 20px;
+    height: 20px;
+    background: var(--primary);
+    border: 3px solid white;
+    border-radius: 50%;
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.8);
+    animation: pulse-blue 1.5s infinite;
+}
+
+.dest-marker {
+    width: 28px;
+    height: 28px;
+    background: #ef4444;
+    border: 3px solid white;
+    clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+    box-shadow: 0 4px 10px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes pulse-blue {
+    0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); }
+    70% { box-shadow: 0 0 0 15px rgba(99, 102, 241, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+
+#resetBtn {
+    margin-top: auto;
+    opacity: 0.4;
+    transition: opacity 0.2s;
+}
+
+#resetBtn:hover {
+    opacity: 1;
+}
+
+/* Spinner & Loading States */
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 0.8s linear infinite;
+    display: none;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading .spinner {
+    display: block;
+}
+
+.loading span:not(.spinner) {
+    display: none;
+}
