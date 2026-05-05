@@ -334,6 +334,7 @@
                 destName.innerText = "Destination Set";
                 
                 if (userPos) calculateRoute();
+                checkReadyToStart();
             }
         });
 
@@ -347,6 +348,13 @@
             map.flyTo([lat, lng], 15);
             startName.innerText = method;
             if (destPos) calculateRoute();
+            checkReadyToStart();
+        }
+
+        function checkReadyToStart() {
+            if (userPos && destPos) {
+                startBtn.disabled = false;
+            }
         }
 
         function calculateRoute() {
@@ -360,32 +368,80 @@
                 routeWhileDragging: false,
                 addWaypoints: false,
                 lineOptions: {
-                    styles: [{ color: '#6366f1', weight: 0, opacity: 0 }] // Line is now invisible
+                    styles: [{ color: '#6366f1', weight: 4, opacity: 0.8 }]
                 },
-                createMarker: () => null // Hide default routing markers
+                createMarker: () => null
             }).on('routesfound', (e) => {
                 const routes = e.routes;
                 routePath = routes[0].coordinates;
                 startBtn.disabled = false;
+            }).on('routingerror', () => {
+                // Route failed but we still allow start with straight-line fallback
+                startBtn.disabled = false;
             }).addTo(map);
+
+            // Enable button immediately — don't wait for routing
+            checkReadyToStart();
         }
 
         // --- Journey Execution ---
         startBtn.onclick = async () => {
-            const response = await fetch('/api/start-journey', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    startCoords: userPos, 
-                    endCoords: destPos,
-                    path: routePath // Send the real road path to server
-                })
-            });
-            
-            if (response.ok) {
-                document.getElementById('setupView').style.display = 'none';
-                document.getElementById('activeView').style.display = 'block';
-                startTracking();
+            // If routing hasn't returned a path yet, build a straight-line fallback
+            let pathToSend = routePath;
+            if (!pathToSend || pathToSend.length === 0) {
+                // Generate 200 interpolated points between start and destination
+                pathToSend = [];
+                const steps = 200;
+                for (let i = 0; i <= steps; i++) {
+                    pathToSend.push({
+                        lat: userPos.lat + (destPos.lat - userPos.lat) * (i / steps),
+                        lng: userPos.lng + (destPos.lng - userPos.lng) * (i / steps)
+                    });
+                }
+            } else {
+                // Leaflet returns LatLng objects; normalize to {lat, lng}
+                pathToSend = pathToSend.map(p => ({ lat: p.lat, lng: p.lng }));
+
+                // Thin path to max 300 points — long routes can have 5000+ points
+                // which causes oversized payloads. Evenly sample to keep it lean.
+                const MAX_POINTS = 300;
+                if (pathToSend.length > MAX_POINTS) {
+                    const thinned = [];
+                    const step = (pathToSend.length - 1) / (MAX_POINTS - 1);
+                    for (let i = 0; i < MAX_POINTS; i++) {
+                        thinned.push(pathToSend[Math.round(i * step)]);
+                    }
+                    pathToSend = thinned;
+                }
+            }
+
+            startBtn.disabled = true;
+            startBtn.innerHTML = '⏳ Starting...';
+
+            try {
+                const response = await fetch('/api/start-journey', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        startCoords: userPos, 
+                        endCoords: destPos,
+                        path: pathToSend
+                    })
+                });
+                
+                if (response.ok) {
+                    document.getElementById('setupView').style.display = 'none';
+                    document.getElementById('activeView').style.display = 'block';
+                    startTracking();
+                } else {
+                    alert('Failed to start journey. Please try again.');
+                    startBtn.disabled = false;
+                    startBtn.innerHTML = '🚀 START NAVIGATION';
+                }
+            } catch (err) {
+                alert('Server error. Make sure the server is running.');
+                startBtn.disabled = false;
+                startBtn.innerHTML = '🚀 START NAVIGATION';
             }
         };
 

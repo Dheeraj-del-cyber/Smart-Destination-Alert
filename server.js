@@ -3,7 +3,8 @@ const path = require('path');
 const app = express();
 const PORT = 3000;
 
-app.use(express.json());
+// Increase body size limit to handle large route paths (long distances)
+app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
 
 // In-memory state
@@ -11,19 +12,19 @@ let journeyState = {
     active: false,
     currentDistance: 0,
     targetDistance: 0,
-    path: [], // Array of {lat, lng}
+    path: [],
     pathIndex: 0,
+    stepSize: 1,  // How many path points to skip per tick (scales with path length)
     vibration: false,
     reached: false,
-    coordinates: { lat: 0, lng: 0 } 
+    coordinates: { lat: 0, lng: 0 }
 };
 
-// Simulation loop
+// Simulation loop — runs every 300ms
 setInterval(() => {
     if (journeyState.active && !journeyState.reached && journeyState.path.length > 0) {
-        // Increment speed (move through the path array)
-        // Adjust index based on simulated speed
-        journeyState.pathIndex += 1; 
+        // Move forward by stepSize (proportional to path length for any distance)
+        journeyState.pathIndex += journeyState.stepSize;
 
         if (journeyState.pathIndex >= journeyState.path.length) {
             journeyState.pathIndex = journeyState.path.length - 1;
@@ -35,18 +36,17 @@ setInterval(() => {
             journeyState.coordinates.lat = currentPoint.lat;
             journeyState.coordinates.lng = currentPoint.lng;
 
-            // Calculate current distance from start along the path
-            // (Simple approximation: ratio of index to length)
+            // Progress ratio
             journeyState.currentDistance = (journeyState.pathIndex / journeyState.path.length) * journeyState.targetDistance;
 
-            // Alert when near end (e.g., last 10% or last few points)
+            // Vibrate alert when within last 10%
             const remainingRatio = 1 - (journeyState.pathIndex / journeyState.path.length);
             if (remainingRatio <= 0.1 && remainingRatio > 0) {
                 journeyState.vibration = true;
             }
         }
     }
-}, 300); // Slightly faster tick for smoother movement on paths
+}, 300);
 
 app.post('/api/start-journey', (req, res) => {
     const { startCoords, endCoords, path } = req.body;
@@ -78,6 +78,8 @@ app.post('/api/start-journey', (req, res) => {
         targetDistance: getPathDistance(path),
         path: path,
         pathIndex: 0,
+        // ~200 ticks at 300ms = 60 seconds total simulation. stepSize covers all points in that time.
+        stepSize: Math.max(1, Math.ceil(path.length / 200)),
         vibration: false,
         reached: false,
         coordinates: { ...startCoords }
