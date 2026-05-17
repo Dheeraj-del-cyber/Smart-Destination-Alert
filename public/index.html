@@ -61,8 +61,6 @@
 
     <!-- Map Layer Toggle & Settings -->
     <div class="map-layer-control">
-        <button id="darkLayerBtn" class="layer-btn">Dark</button>
-        <button id="satLayerBtn" class="layer-btn active">Satellite</button>
         <button id="settingsBtn" class="layer-btn" style="font-size: 1.1rem; padding: 4px 8px;">⚙️</button>
     </div>
 
@@ -368,7 +366,6 @@
         };
 
         // --- Map Setup ---
-        let darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
         let satLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}');
 
         let map = L.map('map', { 
@@ -376,23 +373,6 @@
             attributionControl: false,
             layers: [satLayer]
         }).setView([20, 0], 2);
-
-        // --- Layer Toggling ---
-        const darkBtn = document.getElementById('darkLayerBtn');
-        const satBtn = document.getElementById('satLayerBtn');
-
-        darkBtn.onclick = () => {
-            map.removeLayer(satLayer);
-            map.addLayer(darkLayer);
-            darkBtn.classList.add('active');
-            satBtn.classList.remove('active');
-        };
-        satBtn.onclick = () => {
-            map.removeLayer(darkLayer);
-            map.addLayer(satLayer);
-            satBtn.classList.add('active');
-            darkBtn.classList.remove('active');
-        };
 
         // --- State ---
         let userPos = null;
