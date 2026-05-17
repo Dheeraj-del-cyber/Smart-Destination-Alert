@@ -192,7 +192,7 @@
         </button>
     </div>
 
-    <audio id="alertAudio" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3"></audio>
+    <audio id="alertAudio" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" loop></audio>
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -617,12 +617,58 @@
         };
 
         exitNavBtn.onclick = async () => {
+            // Stop sound loop immediately
+            const audio = document.getElementById('alertAudio');
+            audio.pause();
+            audio.currentTime = 0;
+
             if (bleVibrating) {
                 bleVibrating = false;
-                await sendBLEAlert(false);
+                try {
+                    await sendBLEAlert(false);
+                } catch (e) {
+                    console.log("BLE disconnect/turnoff error:", e);
+                }
             }
+            
+            // Reset backend state
             await fetch('/api/reset', { method: 'POST' });
-            location.reload();
+
+            // Soft Reset UI State to preserve Web Bluetooth connection!
+            document.getElementById('setupView').style.display = 'block';
+            document.getElementById('activeView').style.display = 'none';
+
+            // Clear destination marker and routing paths
+            if (destMarker) {
+                map.removeLayer(destMarker);
+                destMarker = null;
+            }
+            destPos = null;
+            destName.innerText = "Not Set";
+            routePath = null;
+            if (routingControl) {
+                map.removeControl(routingControl);
+                routingControl = null;
+            }
+
+            // Restore alert card warning styles
+            const warnAlert = document.getElementById('warnAlert');
+            warnAlert.style.display = 'none';
+            warnAlert.innerText = "📳 APPROACHING DESTINATION";
+            warnAlert.style.background = "rgba(245, 158, 11, 0.2)";
+            warnAlert.style.color = "#f59e0b";
+
+            // Reset navigation progress telemetry
+            document.getElementById('pFill').style.width = '0%';
+            document.getElementById('distText').innerText = '0.00 km';
+            document.getElementById('remainText').innerText = '0.00 km left';
+
+            // Reset Start Button
+            startBtn.disabled = false;
+            startBtn.innerHTML = '🚀 START NAVIGATION';
+            
+            // Expand bottom setup sheet automatically
+            expandSetup();
         };
 
         function startTracking() {
@@ -656,10 +702,12 @@
                     document.getElementById('warnAlert').style.background = "rgba(16, 185, 129, 0.2)";
                     document.getElementById('warnAlert').style.color = "#10b981";
                     
-                    if (bleVibrating) {
-                        bleVibrating = false;
-                        sendBLEAlert(false);
+                    // Guarantee wristband vibration is active on arrival and stays ON!
+                    if (!bleVibrating) {
+                        bleVibrating = true;
+                        sendBLEAlert(true);
                     }
+                    
                     clearInterval(poll);
                 }
             }, 500);
