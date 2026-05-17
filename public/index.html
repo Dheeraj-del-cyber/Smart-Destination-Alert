@@ -58,8 +58,8 @@
 
     <!-- Map Layer Toggle -->
     <div class="map-layer-control">
-        <button id="darkLayerBtn" class="layer-btn active">Dark</button>
-        <button id="satLayerBtn" class="layer-btn">Satellite</button>
+        <button id="darkLayerBtn" class="layer-btn">Dark</button>
+        <button id="satLayerBtn" class="layer-btn active">Satellite</button>
     </div>
 
     <div class="ui-overlay">
@@ -340,7 +340,7 @@
         let map = L.map('map', { 
             zoomControl: false,
             attributionControl: false,
-            layers: [darkLayer]
+            layers: [satLayer]
         }).setView([20, 0], 2);
 
         // --- Layer Toggling ---
