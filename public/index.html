@@ -156,6 +156,14 @@
                         <span id="destName" class="status-value">Tap map...</span>
                     </div>
                 </div>
+
+                <div style="margin: 10px 0; border-top: 1px solid var(--glass-border);"></div>
+                <span class="section-label">Step 3: Alert Settings</span>
+                <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;">
+                    <label for="alertDist" style="font-size: 0.8rem; color: var(--text-muted); flex: 1;">Alert distance (km):</label>
+                    <input type="number" id="alertDist" value="0.1" step="0.05" min="0.01" max="100" 
+                        style="width: 80px; padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; font-size: 0.8rem;">
+                </div>
             </div>
 
             <div id="setupFooter" class="sticky-footer" style="display: flex; gap: 8px;">
@@ -634,6 +642,8 @@
             startRealBtn.disabled = true;
             startDemoBtn.innerHTML = '⏳ Starting...';
 
+            const alertDistance = parseFloat(document.getElementById('alertDist').value) || 0.1;
+
             try {
                 const response = await fetch('/api/start-journey', {
                     method: 'POST',
@@ -641,7 +651,8 @@
                     body: JSON.stringify({ 
                         startCoords: userPos, 
                         endCoords: destPos,
-                        path: pathToSend
+                        path: pathToSend,
+                        alertDistance: alertDistance
                     })
                 });
                 
@@ -676,6 +687,8 @@
             startRealBtn.disabled = true;
             startRealBtn.innerHTML = '⏳ Starting...';
 
+            const alertDistance = parseFloat(document.getElementById('alertDist').value) || 0.1;
+
             initialDistance = map.distance(L.latLng(userPos.lat, userPos.lng), L.latLng(destPos.lat, destPos.lng)) / 1000;
             
             isJourneyActive = true;
@@ -698,7 +711,7 @@
                     document.getElementById('distText').innerText = currentDistance.toFixed(2) + ' km';
                     document.getElementById('remainText').innerText = currentDistance.toFixed(2) + ' km left';
 
-                    if (currentDistance < 0.1 && currentDistance > 0.03) {
+                    if (currentDistance <= alertDistance && currentDistance > 0.03) {
                         document.getElementById('warnAlert').style.display = 'block';
                         if (!bleVibrating) {
                             bleVibrating = true;

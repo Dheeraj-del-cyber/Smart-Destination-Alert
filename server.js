@@ -17,7 +17,8 @@ let journeyState = {
     stepSize: 1,  // How many path points to skip per tick (scales with path length)
     vibration: false,
     reached: false,
-    coordinates: { lat: 0, lng: 0 }
+    coordinates: { lat: 0, lng: 0 },
+    alertDistance: 0.1
 };
 
 // Simulation loop — runs every 300ms
@@ -39,9 +40,9 @@ setInterval(() => {
             // Progress ratio
             journeyState.currentDistance = (journeyState.pathIndex / journeyState.path.length) * journeyState.targetDistance;
 
-            // Vibrate alert when within last 10%
-            const remainingRatio = 1 - (journeyState.pathIndex / journeyState.path.length);
-            if (remainingRatio <= 0.1 && remainingRatio > 0) {
+            // Vibrate alert when remaining distance is <= alertDistance
+            const remainingDistance = journeyState.targetDistance - journeyState.currentDistance;
+            if (remainingDistance <= journeyState.alertDistance && remainingDistance > 0) {
                 journeyState.vibration = true;
             }
         }
@@ -49,7 +50,7 @@ setInterval(() => {
 }, 300);
 
 app.post('/api/start-journey', (req, res) => {
-    const { startCoords, endCoords, path } = req.body;
+    const { startCoords, endCoords, path, alertDistance } = req.body;
     
     if (!startCoords || !endCoords || !path) {
         return res.status(400).json({ error: 'Start, End coordinates and path required' });
@@ -82,7 +83,8 @@ app.post('/api/start-journey', (req, res) => {
         stepSize: Math.max(1, Math.ceil(path.length / 200)),
         vibration: false,
         reached: false,
-        coordinates: { ...startCoords }
+        coordinates: { ...startCoords },
+        alertDistance: alertDistance || 0.1
     };
 
     res.json({ message: 'Journey started', state: journeyState });
