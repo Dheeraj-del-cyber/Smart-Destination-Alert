@@ -59,10 +59,11 @@
 
     <div id="map"></div>
 
-    <!-- Map Layer Toggle -->
+    <!-- Map Layer Toggle & Settings -->
     <div class="map-layer-control">
         <button id="darkLayerBtn" class="layer-btn">Dark</button>
         <button id="satLayerBtn" class="layer-btn active">Satellite</button>
+        <button id="settingsBtn" class="layer-btn" style="font-size: 1.1rem; padding: 4px 8px;">⚙️</button>
     </div>
 
     <div class="ui-overlay">
@@ -157,13 +158,6 @@
                         <span id="destName" class="status-value">Tap map...</span>
                     </div>
                 </div>
-
-                <div style="margin: 10px 0; border-top: 1px solid var(--glass-border);"></div>
-                <span class="section-label">Step 3: Alert Settings</span>
-                <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;">
-                    <label for="alertDist" style="font-size: 0.8rem; color: var(--text-muted); flex: 1;">Alert distance (km):</label>
-                    <input type="number" id="alertDist" class="custom-input" value="0.1" step="0.05" min="0.01" max="100" style="width: 80px; flex: none;">
-                </div>
             </div>
 
             <div id="setupFooter" class="sticky-footer" style="display: flex; gap: 8px;">
@@ -207,6 +201,38 @@
     </div>
 
     <audio id="alertAudio" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" loop></audio>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; pointer-events: auto;">
+        <div class="floating-card" style="width: 340px; max-width: 90%;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 16px;">
+                <h3 style="font-size: 1.1rem; margin: 0; display: flex; align-items: center; gap: 8px;">⚙️ Alert Settings</h3>
+                <button id="closeSettingsBtn" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; line-height: 1;">×</button>
+            </div>
+            
+            <div style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center;">
+                <label for="alertDist" style="font-size: 0.9rem; color: var(--text-white); flex: 1;">Alert distance (km):</label>
+                <input type="number" id="alertDist" class="custom-input" value="0.1" step="0.05" min="0.01" max="100" style="width: 80px; flex: none;">
+            </div>
+            
+            <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;">
+                <label for="soundSelect" style="font-size: 0.9rem; color: var(--text-white); flex: 1;">Alert Sound:</label>
+                <select id="soundSelect" class="custom-input" style="flex: 2; padding: 10px; border-radius: 10px; -webkit-appearance: auto; appearance: auto; color: white;">
+                    <option value="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" style="color: black;">Standard Chime</option>
+                    <option value="https://assets.mixkit.co/active_storage/sfx/2864/2864-preview.mp3" style="color: black;">Loud Buzzer</option>
+                    <option value="https://assets.mixkit.co/active_storage/sfx/2868/2868-preview.mp3" style="color: black;">Soft Ding</option>
+                    <option value="https://assets.mixkit.co/active_storage/sfx/1000/1000-preview.mp3" style="color: black;">Electronic Alarm</option>
+                    <option value="https://assets.mixkit.co/active_storage/sfx/995/995-preview.mp3" style="color: black;">Digital Beep</option>
+                    <option value="custom" style="color: black;">Upload Custom...</option>
+                </select>
+                <button id="testSoundBtn" class="btn btn-outline" style="width: auto; padding: 8px; flex: none;">🔊</button>
+            </div>
+
+            <div id="customAudioContainer" style="display: none; margin-bottom: 8px;">
+                <input type="file" id="customAudioInput" accept="audio/*" class="custom-input" style="font-size: 0.8rem; padding: 8px;">
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -417,6 +443,49 @@
         const searchBtn = document.getElementById('searchBtn');
         const startSearch = document.getElementById('startSearch');
         const startSearchBtn = document.getElementById('startSearchBtn');
+
+        // --- Settings Modal & Sound Selection ---
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+
+        settingsBtn.onclick = () => {
+            settingsModal.style.display = 'flex';
+        };
+        closeSettingsBtn.onclick = () => {
+            settingsModal.style.display = 'none';
+        };
+
+        const soundSelect = document.getElementById('soundSelect');
+        const alertAudio = document.getElementById('alertAudio');
+        const testSoundBtn = document.getElementById('testSoundBtn');
+        const customAudioContainer = document.getElementById('customAudioContainer');
+        const customAudioInput = document.getElementById('customAudioInput');
+
+        soundSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'custom') {
+                customAudioContainer.style.display = 'block';
+            } else {
+                customAudioContainer.style.display = 'none';
+                alertAudio.src = e.target.value;
+            }
+        });
+
+        customAudioInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const objectURL = URL.createObjectURL(file);
+                alertAudio.src = objectURL;
+            }
+        });
+
+        testSoundBtn.addEventListener('click', () => {
+            alertAudio.play().catch(e => console.log("Audio test failed", e));
+            setTimeout(() => {
+                alertAudio.pause();
+                alertAudio.currentTime = 0;
+            }, 2000); // Play for 2 seconds
+        });
 
         // --- Start Location Search Logic ---
         startSearchBtn.onclick = async () => {
