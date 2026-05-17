@@ -320,17 +320,35 @@ body {
 
 .btn {
     width: 100%;
-    padding: 10px; /* Reduced from 14px */
+    padding: 12px 14px; /* Increased for mobile touch target size */
     border-radius: 12px;
     border: none;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.9rem; /* Increased font size for readability */
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     transition: all 0.2s ease;
+}
+
+.custom-input {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid var(--glass-border);
+    background: rgba(0,0,0,0.2);
+    color: white;
+    font-size: 16px; /* 16px prevents iOS zoom */
+    outline: none;
+    transition: 0.2s;
+    -webkit-appearance: none;
+}
+
+.custom-input:focus {
+    border-color: var(--primary);
+    background: rgba(0,0,0,0.4);
 }
 
 .btn-primary {

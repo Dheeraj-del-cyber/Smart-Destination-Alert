@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Near | Smart Destination Alert</title>
     
     <!-- Fonts & Icons -->
@@ -110,8 +113,7 @@
                 <span class="section-label">Step 1: Start Location</span>
                 <div id="gpsBox">
                     <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                        <input type="text" id="startSearch" placeholder="Enter starting point..." 
-                            style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; font-size: 0.8rem;">
+                        <input type="text" id="startSearch" class="custom-input" placeholder="Enter starting point...">
                         <button id="startSearchBtn" class="btn btn-primary" style="width: auto; padding: 0 16px;">
                             🔍
                         </button>
@@ -136,8 +138,7 @@
                 <span class="section-label">Step 2: Set Destination</span>
                 
                 <div style="display: flex; gap: 8px; margin-bottom: 4px;">
-                    <input type="text" id="destSearch" placeholder="Enter destination name..." 
-                        style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; font-size: 0.8rem;">
+                    <input type="text" id="destSearch" class="custom-input" placeholder="Enter destination name...">
                     <button id="searchBtn" class="btn btn-primary" style="width: auto; padding: 0 16px;">
                         🔍
                     </button>
@@ -161,8 +162,7 @@
                 <span class="section-label">Step 3: Alert Settings</span>
                 <div style="display: flex; gap: 8px; margin-bottom: 12px; align-items: center;">
                     <label for="alertDist" style="font-size: 0.8rem; color: var(--text-muted); flex: 1;">Alert distance (km):</label>
-                    <input type="number" id="alertDist" value="0.1" step="0.05" min="0.01" max="100" 
-                        style="width: 80px; padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; font-size: 0.8rem;">
+                    <input type="number" id="alertDist" class="custom-input" value="0.1" step="0.05" min="0.01" max="100" style="width: 80px; flex: none;">
                 </div>
             </div>
 
