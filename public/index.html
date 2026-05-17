@@ -367,6 +367,7 @@
         let destMarker = null;
         let routingControl = null;
         let routePath = [];
+        let isJourneyActive = false;
 
         // --- Elements ---
         const startName = document.getElementById('startName');
@@ -502,6 +503,8 @@
 
         // --- Map Interaction & Routing ---
         map.on('click', (e) => {
+            if (isJourneyActive) return; // Prevent mistouches from changing destination while navigating!
+
             const pos = { lat: e.latlng.lat, lng: e.latlng.lng };
             
             destPos = pos;
@@ -617,6 +620,7 @@
                 });
                 
                 if (response.ok) {
+                    isJourneyActive = true;
                     document.getElementById('setupView').style.display = 'none';
                     document.getElementById('activeView').style.display = 'block';
                     startTracking();
@@ -647,6 +651,7 @@
 
             initialDistance = map.distance(L.latLng(userPos.lat, userPos.lng), L.latLng(destPos.lat, destPos.lng)) / 1000;
             
+            isJourneyActive = true;
             document.getElementById('setupView').style.display = 'none';
             document.getElementById('activeView').style.display = 'block';
 
@@ -695,6 +700,8 @@
         };
 
         exitNavBtn.onclick = async () => {
+            isJourneyActive = false; // Unlock map interaction
+            
             // Stop sound loop immediately
             const audio = document.getElementById('alertAudio');
             audio.pause();
