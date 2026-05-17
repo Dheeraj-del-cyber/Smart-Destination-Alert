@@ -64,19 +64,190 @@ body {
     background: var(--primary);
 }
 
-@media (max-width: 480px) {
+/* Setup Header (Accordion control on mobile, hidden on desktop) */
+.setup-header {
+    display: none;
+}
+
+/* Responsive/Mobile Layout (Bottom Sheet Paradigm) */
+@media (max-width: 768px) {
+    /* Hide Brand Card on mobile to save precious screen real estate */
+    #brandCard {
+        display: none !important;
+    }
+
+    /* Stretch overlay full screen so children can float independently */
     .ui-overlay {
-        left: 10px;
-        right: 10px;
-        top: 10px;
-        bottom: 10px;
-        width: auto;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        height: 100%;
         max-width: none;
+        max-height: none;
+        padding: 0;
+        margin: 0;
+        display: block; /* Disable flex column stacking */
+        pointer-events: none;
+    }
+
+    .floating-card {
+        padding: 12px 16px;
+        border-radius: 16px;
+        pointer-events: auto;
+    }
+
+    /* Decoupled BLE Card: Float at top-left next to map layers */
+    #bleCard {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        width: calc(100% - 160px); /* Leave room for map layers on the right */
+        max-width: 210px;
+        bottom: auto;
+        margin: 0;
+        pointer-events: auto;
+        padding: 8px 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.08);
     }
     
-    .floating-card {
-        padding: 16px;
-        border-radius: 20px;
+    #bleCard .section-label {
+        display: none !important; /* Hide label to save space */
+    }
+
+    #bleCard .status-dot {
+        margin-right: 4px;
+    }
+
+    #bleStatusText {
+        font-size: 0.75rem !important;
+    }
+
+    #bleConnectBtn {
+        padding: 4px 8px !important;
+        font-size: 0.7rem !important;
+        border-radius: 8px !important;
+    }
+
+    #bleTestBtn {
+        font-size: 0.75rem !important;
+        padding: 6px 10px !important;
+        margin-top: 8px !important;
+    }
+
+    /* Decoupled Setup & Active Views: Elegant bottom sheet overlay */
+    #setupView, #activeView {
+        position: absolute;
+        bottom: 12px;
+        left: 12px;
+        right: 12px;
+        top: auto;
+        width: auto;
+        margin: 0;
+        pointer-events: auto;
+        max-height: 50vh;
+        overflow-y: auto;
+        border-radius: 16px;
+        transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+    }
+
+    /* Mobile Accordion Header for setupView */
+    .setup-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        padding-bottom: 6px;
+        border-bottom: 1px solid var(--glass-border);
+        margin-bottom: 12px;
+        width: 100%;
+        user-select: none;
+    }
+    
+    .setup-header .header-title {
+        font-weight: 700;
+        font-size: 0.8rem;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+
+    .setup-header .collapse-arrow {
+        font-size: 0.75rem;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        color: var(--primary);
+    }
+
+    /* Collapsed state styles */
+    #setupView.collapsed {
+        max-height: 44px !important;
+        overflow: hidden !important;
+        padding-top: 12px !important;
+        padding-bottom: 12px !important;
+    }
+    
+    #setupView.collapsed #setupContent {
+        display: none !important;
+    }
+
+    #setupView.collapsed .setup-header {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    #setupView.collapsed .collapse-arrow {
+        transform: rotate(-180deg);
+    }
+
+    /* Style improvements for elements inside setup card */
+    .section-label {
+        font-size: 0.7rem;
+        margin-bottom: 8px;
+    }
+
+    .btn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        border-radius: 10px;
+    }
+
+    .location-status {
+        padding: 8px 12px;
+        margin-top: 6px;
+        border-radius: 10px;
+    }
+
+    .status-item {
+        font-size: 0.75rem;
+        margin-bottom: 4px;
+    }
+
+    #startBtn {
+        margin-top: 12px;
+    }
+
+    /* Re-index map-layer-control to remain clickable above full-width mobile overlay */
+    .map-layer-control {
+        top: 12px;
+        right: 12px;
+        z-index: 500; /* Ensure it floats above overlay cards */
+    }
+
+    .layer-btn {
+        padding: 6px 10px;
+        border-radius: 8px;
+        font-size: 0.7rem;
+    }
+
+    #resetBtn {
+        display: none !important; /* Hide factory reset on mobile */
     }
 }
 
@@ -316,3 +487,62 @@ body {
 .loading span:not(.spinner) {
     display: none;
 }
+
+/* Bluetooth Connection Card & Wearable Hardware UI */
+#bleCard {
+    order: -1; /* Place it right below the brand card */
+    margin-bottom: 4px;
+    padding: 12px 16px;
+    transition: border-color 0.3s ease;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    transition: all 0.3s ease;
+}
+
+.status-dot.disconnected {
+    background: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+}
+
+.status-dot.connecting {
+    background: #fbbf24;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+    animation: pulse-dot 1.2s infinite;
+}
+
+.status-dot.connected {
+    background: #10b981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+    animation: pulse-connected-dot 2.0s infinite;
+}
+
+.ble-support-warn {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 0.7rem;
+    color: #f87171;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+@keyframes pulse-dot {
+    0% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(1); opacity: 0.6; }
+}
+
+@keyframes pulse-connected-dot {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+    70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+

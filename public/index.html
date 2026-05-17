@@ -64,7 +64,7 @@
 
     <div class="ui-overlay">
         <!-- Brand Card -->
-        <div class="floating-card">
+        <div class="floating-card" id="brandCard">
             <div class="brand">
                 <div class="brand-icon">📍</div>
                 <div>
@@ -74,60 +74,92 @@
             </div>
         </div>
 
+        <!-- Bluetooth Connection Card -->
+        <div class="floating-card" id="bleCard">
+            <span class="section-label">Wearable Wristband (ESP32)</span>
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span id="bleStatusDot" class="status-dot disconnected"></span>
+                    <span id="bleStatusText" style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted);">Not Connected</span>
+                </div>
+                <button id="bleConnectBtn" class="btn btn-outline" style="width: auto; padding: 6px 12px; font-size: 0.75rem; border-radius: 8px; margin: 0;">
+                    🔌 Connect
+                </button>
+            </div>
+            
+            <div id="bleSupportWarn" class="ble-support-warn" style="display: none;">
+                ⚠️ BLE not supported by your browser. Use Chrome/Edge.
+            </div>
+
+            <div id="bleTestBtnContainer" style="display: none; margin-top: 10px; border-top: 1px solid var(--glass-border); padding-top: 8px;">
+                <button id="bleTestBtn" class="btn btn-outline" style="font-size: 0.75rem; padding: 6px; width: 100%;">
+                    📳 Test Wristband (1.5s)
+                </button>
+            </div>
+        </div>
+
         <!-- Setup View -->
         <div id="setupView" class="floating-card">
-            <span class="section-label">Step 1: Start Location</span>
-            <div id="gpsBox">
-                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                    <input type="text" id="startSearch" placeholder="Enter starting point..." 
+            <!-- Mobile Collapsible Accordion Header -->
+            <div class="setup-header" onclick="toggleSetupCollapse()">
+                <span class="header-title">🗺️ Journey Setup</span>
+                <span id="setupCollapseArrow" class="collapse-arrow">▼</span>
+            </div>
+
+            <div id="setupContent">
+                <span class="section-label">Step 1: Start Location</span>
+                <div id="gpsBox">
+                    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                        <input type="text" id="startSearch" placeholder="Enter starting point..." 
+                            style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; font-size: 0.8rem;">
+                        <button id="startSearchBtn" class="btn btn-primary" style="width: auto; padding: 0 16px;">
+                            🔍
+                        </button>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button id="activateGPS" class="btn btn-outline" style="flex: 1; margin-bottom: 8px;">
+                            <span class="spinner"></span>
+                            <span>📡</span> <span id="gpsBtnText">GPS</span>
+                        </button>
+                        <button id="manualModeBtn" class="btn btn-outline" style="flex: 1; margin-bottom: 8px;">
+                            <span>📍</span> Pin on Map
+                        </button>
+                    </div>
+                    <div id="gpsHelp" class="help-box">
+                        GPS requires HTTPS or localhost. Using IP fallback.
+                    </div>
+                </div>
+
+                <div style="margin: 10px 0; border-top: 1px solid var(--glass-border);"></div>
+
+                <span class="section-label">Step 2: Set Destination</span>
+                
+                <div style="display: flex; gap: 8px; margin-bottom: 4px;">
+                    <input type="text" id="destSearch" placeholder="Enter destination name..." 
                         style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; font-size: 0.8rem;">
-                    <button id="startSearchBtn" class="btn btn-primary" style="width: auto; padding: 0 16px;">
+                    <button id="searchBtn" class="btn btn-primary" style="width: auto; padding: 0 16px;">
                         🔍
                     </button>
                 </div>
-                <div style="display: flex; gap: 8px;">
-                    <button id="activateGPS" class="btn btn-outline" style="flex: 1; margin-bottom: 8px;">
-                        <span class="spinner"></span>
-                        <span>📡</span> <span id="gpsBtnText">GPS</span>
-                    </button>
-                    <button id="manualModeBtn" class="btn btn-outline" style="flex: 1; margin-bottom: 8px;">
-                        <span>📍</span> Pin on Map
-                    </button>
-                </div>
-                <div id="gpsHelp" class="help-box">
-                    GPS requires HTTPS or localhost. Using IP fallback.
-                </div>
-            </div>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin: 4px 0 12px 4px;">
+                    Tip: You can also <b>tap anywhere on map</b> to pin.
+                </p>
 
-            <div style="margin: 10px 0; border-top: 1px solid var(--glass-border);"></div>
+                <div class="location-status">
+                    <div class="status-item">
+                        <span class="status-label">Start:</span>
+                        <span id="startName" class="status-value">Not Set</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Dest:</span>
+                        <span id="destName" class="status-value">Tap map...</span>
+                    </div>
+                </div>
 
-            <span class="section-label">Step 2: Set Destination</span>
-            
-            <div style="display: flex; gap: 8px; margin-bottom: 4px;">
-                <input type="text" id="destSearch" placeholder="Enter destination name..." 
-                    style="flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(0,0,0,0.2); color: white; font-size: 0.8rem;">
-                <button id="searchBtn" class="btn btn-primary" style="width: auto; padding: 0 16px;">
-                    🔍
+                <button id="startBtn" class="btn btn-primary" style="margin-top: 20px; background: var(--accent);" disabled>
+                    🚀 START NAVIGATION
                 </button>
             </div>
-            <p style="font-size: 0.75rem; color: var(--text-muted); margin: 4px 0 12px 4px;">
-                Tip: You can also <b>tap anywhere on map</b> to pin.
-            </p>
-
-            <div class="location-status">
-                <div class="status-item">
-                    <span class="status-label">Start:</span>
-                    <span id="startName" class="status-value">Not Set</span>
-                </div>
-                <div class="status-item">
-                    <span class="status-label">Dest:</span>
-                    <span id="destName" class="status-value">Tap map...</span>
-                </div>
-            </div>
-
-            <button id="startBtn" class="btn btn-primary" style="margin-top: 20px; background: var(--accent);" disabled>
-                🚀 START NAVIGATION
-            </button>
         </div>
 
         <!-- Active View -->
@@ -166,6 +198,135 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
     <script>
+        // --- Mobile Setup Collapsible ---
+        function toggleSetupCollapse() {
+            const setupCard = document.getElementById('setupView');
+            setupCard.classList.toggle('collapsed');
+        }
+        function expandSetup() {
+            const setupCard = document.getElementById('setupView');
+            if (setupCard.classList.contains('collapsed')) {
+                setupCard.classList.remove('collapsed');
+            }
+        }
+
+        // --- BLE Hardware Integration ---
+        const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+        const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+
+        let bleDevice = null;
+        let bleServer = null;
+        let bleCharacteristic = null;
+        let bleVibrating = false;
+
+        const bleConnectBtn = document.getElementById('bleConnectBtn');
+        const bleStatusText = document.getElementById('bleStatusText');
+        const bleStatusDot = document.getElementById('bleStatusDot');
+        const bleSupportWarn = document.getElementById('bleSupportWarn');
+        const bleTestBtnContainer = document.getElementById('bleTestBtnContainer');
+        const bleTestBtn = document.getElementById('bleTestBtn');
+
+        // Check browser compatibility
+        if (!navigator.bluetooth) {
+            bleSupportWarn.style.display = 'flex';
+            bleConnectBtn.disabled = true;
+            bleConnectBtn.style.opacity = 0.5;
+            bleConnectBtn.innerText = "🚫 BLE Blocked";
+        }
+
+        // Bluetooth BLE Connection Logic
+        bleConnectBtn.onclick = async () => {
+            if (bleDevice && bleDevice.gatt.connected) {
+                try {
+                    await bleDevice.gatt.disconnect();
+                } catch (err) {
+                    console.error("Disconnect error", err);
+                }
+                return;
+            }
+
+            try {
+                bleStatusDot.className = "status-dot connecting";
+                bleStatusText.innerText = "Scanning...";
+                bleConnectBtn.disabled = true;
+
+                bleDevice = await navigator.bluetooth.requestDevice({
+                    filters: [{ namePrefix: "NearBand" }, { services: [SERVICE_UUID] }],
+                    optionalServices: [SERVICE_UUID]
+                });
+
+                bleDevice.addEventListener('gattserverdisconnected', onBLEDisconnected);
+
+                bleStatusText.innerText = "Connecting...";
+                bleServer = await bleDevice.gatt.connect();
+
+                bleStatusText.innerText = "Service Sync...";
+                const service = await bleServer.getPrimaryService(SERVICE_UUID);
+
+                bleStatusText.innerText = "Configuring...";
+                bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+                // Successfully connected
+                bleStatusDot.className = "status-dot connected";
+                bleStatusText.innerText = "Connected";
+                bleStatusText.style.color = "#10b981";
+                bleConnectBtn.innerText = "🔌 Disconnect";
+                bleConnectBtn.disabled = false;
+                bleTestBtnContainer.style.display = "block";
+            } catch (err) {
+                console.error("Bluetooth connection failed", err);
+                onBLEDisconnected();
+                alert("Bluetooth Connection Failed:\n" + err.message);
+            }
+        };
+
+        function onBLEDisconnected() {
+            bleStatusDot.className = "status-dot disconnected";
+            bleStatusText.innerText = "Not Connected";
+            bleStatusText.style.color = "";
+            bleConnectBtn.innerText = "🔌 Connect";
+            bleConnectBtn.disabled = false;
+            bleTestBtnContainer.style.display = "none";
+            bleCharacteristic = null;
+            bleServer = null;
+            bleDevice = null;
+        }
+
+        // Send Bluetooth Vibration Signal (1: vibrate, 0: stop)
+        async function sendBLEAlert(state) {
+            if (!bleCharacteristic) return;
+            try {
+                const encoder = new TextEncoder();
+                const value = state ? "1" : "0";
+                await bleCharacteristic.writeValue(encoder.encode(value));
+                console.log("Sent BLE alert state:", value);
+            } catch (err) {
+                console.error("Failed to send BLE alert:", err);
+            }
+        }
+
+        // Test BLE Vibration
+        bleTestBtn.onclick = async () => {
+            if (!bleCharacteristic) return;
+            try {
+                bleTestBtn.disabled = true;
+                bleTestBtn.innerText = "📳 Vibrating...";
+                
+                await sendBLEAlert(true);
+                
+                setTimeout(async () => {
+                    await sendBLEAlert(false);
+                    bleTestBtn.disabled = false;
+                    bleTestBtn.innerText = "📳 Test Wristband (1.5s)";
+                }, 1500);
+            } catch (err) {
+                console.error("BLE test failed", err);
+                alert("BLE Test failed: " + err.message);
+                bleTestBtn.disabled = false;
+                bleTestBtn.innerText = "📳 Test Wristband (1.5s)";
+            }
+        };
+
         // --- Map Setup ---
         let darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
         let satLayer = L.tileLayer('http://mt0.google.com/vt/lyrs=y&hl=en&x={x}&y={y}&z={z}');
@@ -309,6 +470,11 @@
             manualModeBtn.classList.toggle('active');
             manualModeBtn.innerHTML = isManualMode ? "<span>📍</span> TAP MAP NOW" : "<span>📍</span> Pin on Map";
             document.getElementById('map').style.cursor = isManualMode ? "crosshair" : "grab";
+            
+            // Auto collapse bottom sheet to allow full-screen pinning on mobile!
+            if (isManualMode) {
+                document.getElementById('setupView').classList.add('collapsed');
+            }
         };
 
         // --- Map Interaction & Routing ---
@@ -321,6 +487,9 @@
                 manualModeBtn.classList.remove('active');
                 manualModeBtn.innerText = "Change Start Point";
                 document.getElementById('map').style.cursor = "grab";
+                
+                // Auto expand bottom sheet back!
+                expandSetup();
             } else {
                 destPos = pos;
                 if (destMarker) map.removeLayer(destMarker);
@@ -331,6 +500,9 @@
                 
                 if (userPos) calculateRoute();
                 checkReadyToStart();
+                
+                // Auto expand bottom sheet to show routing details!
+                expandSetup();
             }
         });
 
@@ -345,6 +517,9 @@
             startName.innerText = method;
             if (destPos) calculateRoute();
             checkReadyToStart();
+            
+            // Auto expand setup card!
+            expandSetup();
         }
 
         function checkReadyToStart() {
@@ -442,6 +617,10 @@
         };
 
         exitNavBtn.onclick = async () => {
+            if (bleVibrating) {
+                bleVibrating = false;
+                await sendBLEAlert(false);
+            }
             await fetch('/api/reset', { method: 'POST' });
             location.reload();
         };
@@ -463,13 +642,24 @@
                 userMarker.setLatLng([data.coordinates.lat, data.coordinates.lng]);
                 map.panTo([data.coordinates.lat, data.coordinates.lng]);
 
-                if (data.vibration && !data.reached) document.getElementById('warnAlert').style.display = 'block';
+                if (data.vibration && !data.reached) {
+                    document.getElementById('warnAlert').style.display = 'block';
+                    if (!bleVibrating) {
+                        bleVibrating = true;
+                        sendBLEAlert(true);
+                    }
+                }
 
                 if (data.reached) {
                     document.getElementById('alertAudio').play();
                     document.getElementById('warnAlert').innerText = "🏁 ARRIVED!";
                     document.getElementById('warnAlert').style.background = "rgba(16, 185, 129, 0.2)";
                     document.getElementById('warnAlert').style.color = "#10b981";
+                    
+                    if (bleVibrating) {
+                        bleVibrating = false;
+                        sendBLEAlert(false);
+                    }
                     clearInterval(poll);
                 }
             }, 500);
