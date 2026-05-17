@@ -368,6 +368,30 @@
         let routingControl = null;
         let routePath = [];
         let isJourneyActive = false;
+        let wakeLock = null;
+
+        // --- Wake Lock API to prevent screen off during journey ---
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    console.log('Screen Wake Lock active');
+                } catch (err) {
+                    console.error('Wake Lock failed:', err.message);
+                }
+            }
+        }
+        function releaseWakeLock() {
+            if (wakeLock !== null) {
+                wakeLock.release().then(() => wakeLock = null);
+            }
+        }
+        // Re-acquire wake lock if user switches tabs and comes back
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLock !== null && document.visibilityState === 'visible' && isJourneyActive) {
+                await requestWakeLock();
+            }
+        });
 
         // --- Elements ---
         const startName = document.getElementById('startName');
@@ -623,6 +647,7 @@
                 
                 if (response.ok) {
                     isJourneyActive = true;
+                    requestWakeLock();
                     document.getElementById('setupView').style.display = 'none';
                     document.getElementById('activeView').style.display = 'block';
                     startTracking();
@@ -654,6 +679,7 @@
             initialDistance = map.distance(L.latLng(userPos.lat, userPos.lng), L.latLng(destPos.lat, destPos.lng)) / 1000;
             
             isJourneyActive = true;
+            requestWakeLock();
             document.getElementById('setupView').style.display = 'none';
             document.getElementById('activeView').style.display = 'block';
 
@@ -703,6 +729,7 @@
 
         exitNavBtn.onclick = async () => {
             isJourneyActive = false; // Unlock map interaction
+            releaseWakeLock(); // Allow phone screen to sleep normally
             
             // Stop sound loop immediately
             const audio = document.getElementById('alertAudio');
