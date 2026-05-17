@@ -149,9 +149,25 @@ body {
         margin: 0;
         pointer-events: auto;
         max-height: 85vh; /* Increased from 50vh to prevent clipping the Start button on smaller mobile screens */
-        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
         border-radius: 16px;
         transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
+    }
+
+    #setupContent {
+        overflow-y: auto;
+        flex: 1;
+        padding-right: 4px;
+        margin-right: -4px; /* Adjust padding to fit scrollbar smoothly */
+    }
+
+    .sticky-footer {
+        padding-top: 12px;
+        margin-top: 8px;
+        border-top: 1px solid var(--glass-border);
+        background: transparent;
+        flex-shrink: 0;
     }
 
     /* Mobile Accordion Header for setupView */
@@ -192,7 +208,8 @@ body {
         padding-bottom: 12px !important;
     }
     
-    #setupView.collapsed #setupContent {
+    #setupView.collapsed #setupContent,
+    #setupView.collapsed #setupFooter {
         display: none !important;
     }
 
