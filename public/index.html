@@ -116,15 +116,19 @@
                             🔍
                         </button>
                     </div>
-                    <div style="display: flex; gap: 8px;">
-                        <button id="activateGPS" class="btn btn-outline" style="flex: 1; margin-bottom: 8px;">
+                    <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                        <button id="activateGPS" class="btn btn-outline" style="flex: 1;">
                             <span class="spinner"></span>
-                            <span>📡</span> <span id="gpsBtnText">GPS</span>
+                            <span>📡</span> <span id="gpsBtnText">Demo GPS</span>
                         </button>
-                        <button id="manualModeBtn" class="btn btn-outline" style="flex: 1; margin-bottom: 8px;">
-                            <span>📍</span> Pin on Map
+                        <button id="liveGPS" class="btn btn-outline" style="flex: 1;">
+                            <span class="spinner"></span>
+                            <span>🌍</span> <span id="liveGpsText">Live GPS</span>
                         </button>
                     </div>
+                    <button id="manualModeBtn" class="btn btn-outline" style="width: 100%; margin-bottom: 8px;">
+                        <span>📍</span> Pin on Map
+                    </button>
                     <div id="gpsHelp" class="help-box">
                         GPS requires HTTPS or localhost. Using IP fallback.
                     </div>
@@ -157,9 +161,12 @@
                 </div>
             </div>
 
-            <div id="setupFooter" class="sticky-footer">
-                <button id="startBtn" class="btn btn-primary" style="background: var(--accent);" disabled>
-                    🚀 START NAVIGATION
+            <div id="setupFooter" class="sticky-footer" style="display: flex; gap: 8px;">
+                <button id="startDemoBtn" class="btn btn-outline" style="flex: 1; border-color: var(--primary); color: var(--text-white);" disabled>
+                    🏎️ DEMO
+                </button>
+                <button id="startRealBtn" class="btn btn-primary" style="flex: 2; background: var(--accent);" disabled>
+                    🌍 START REAL
                 </button>
             </div>
         </div>
@@ -371,8 +378,13 @@
         const activateGPS = document.getElementById('activateGPS');
         const gpsHelp = document.getElementById('gpsHelp');
         const manualModeBtn = document.getElementById('manualModeBtn');
-        const startBtn = document.getElementById('startBtn');
+        const startDemoBtn = document.getElementById('startDemoBtn');
+        const startRealBtn = document.getElementById('startRealBtn');
+        const liveGPS = document.getElementById('liveGPS');
         const exitNavBtn = document.getElementById('exitNavBtn');
+        
+        let watchId = null;
+        let initialDistance = 0;
         const destSearch = document.getElementById('destSearch');
         const searchBtn = document.getElementById('searchBtn');
         const startSearch = document.getElementById('startSearch');
@@ -467,6 +479,32 @@
             }, 800); // Small delay for realistic feel
         };
 
+        liveGPS.onclick = () => {
+            if (!navigator.geolocation) {
+                alert("Geolocation is not supported by your browser");
+                return;
+            }
+            liveGPS.classList.add('loading');
+            document.getElementById('liveGpsText').innerText = "DETECTING...";
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    handleLocationUpdate(lat, lng, "Live GPS Location");
+                    liveGPS.classList.remove('loading');
+                    liveGPS.innerHTML = "✅ LIVE SET";
+                    liveGPS.style.background = "rgba(16, 185, 129, 0.2)";
+                },
+                (err) => {
+                    alert("GPS Error: Please enable Location Services.");
+                    liveGPS.classList.remove('loading');
+                    document.getElementById('liveGpsText').innerText = "Live GPS";
+                },
+                { enableHighAccuracy: true, maximumAge: 0 }
+            );
+        };
+
         manualModeBtn.onclick = () => {
             isManualMode = !isManualMode;
             manualModeBtn.classList.toggle('active');
@@ -526,7 +564,8 @@
 
         function checkReadyToStart() {
             if (userPos && destPos) {
-                startBtn.disabled = false;
+                startDemoBtn.disabled = false;
+                startRealBtn.disabled = false;
             }
         }
 
@@ -547,10 +586,12 @@
             }).on('routesfound', (e) => {
                 const routes = e.routes;
                 routePath = routes[0].coordinates;
-                startBtn.disabled = false;
+                startDemoBtn.disabled = false;
+                startRealBtn.disabled = false;
             }).on('routingerror', () => {
                 // Route failed but we still allow start with straight-line fallback
-                startBtn.disabled = false;
+                startDemoBtn.disabled = false;
+                startRealBtn.disabled = false;
             }).addTo(map);
 
             // Enable button immediately — don't wait for routing
@@ -558,7 +599,7 @@
         }
 
         // --- Journey Execution ---
-        startBtn.onclick = async () => {
+        startDemoBtn.onclick = async () => {
             // If routing hasn't returned a path yet, build a straight-line fallback
             let pathToSend = routePath;
             if (!pathToSend || pathToSend.length === 0) {
@@ -588,8 +629,9 @@
                 }
             }
 
-            startBtn.disabled = true;
-            startBtn.innerHTML = '⏳ Starting...';
+            startDemoBtn.disabled = true;
+            startRealBtn.disabled = true;
+            startDemoBtn.innerHTML = '⏳ Starting...';
 
             try {
                 const response = await fetch('/api/start-journey', {
@@ -608,14 +650,76 @@
                     startTracking();
                 } else {
                     alert('Failed to start journey. Please try again.');
-                    startBtn.disabled = false;
-                    startBtn.innerHTML = '🚀 START NAVIGATION';
+                    startDemoBtn.disabled = false;
+                    startRealBtn.disabled = false;
+                    startDemoBtn.innerHTML = '🏎️ DEMO';
                 }
             } catch (err) {
                 alert('Server error. Make sure the server is running.');
-                startBtn.disabled = false;
-                startBtn.innerHTML = '🚀 START NAVIGATION';
+                startDemoBtn.disabled = false;
+                startRealBtn.disabled = false;
+                startDemoBtn.innerHTML = '🏎️ DEMO';
             }
+        };
+
+        // Real-world Navigation execution handled locally!
+        startRealBtn.onclick = async () => {
+            if (!navigator.geolocation) {
+                alert("Geolocation is not supported by your device.");
+                return;
+            }
+
+            startDemoBtn.disabled = true;
+            startRealBtn.disabled = true;
+            startRealBtn.innerHTML = '⏳ Starting...';
+
+            initialDistance = map.distance(L.latLng(userPos.lat, userPos.lng), L.latLng(destPos.lat, destPos.lng)) / 1000;
+            
+            document.getElementById('setupView').style.display = 'none';
+            document.getElementById('activeView').style.display = 'block';
+
+            // Start live watch
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    userMarker.setLatLng([lat, lng]);
+                    map.panTo([lat, lng]);
+
+                    const currentDistance = map.distance(L.latLng(lat, lng), L.latLng(destPos.lat, destPos.lng)) / 1000;
+                    
+                    const progress = Math.min(100, ((initialDistance - currentDistance) / initialDistance) * 100);
+                    document.getElementById('pFill').style.width = Math.max(0, progress) + '%';
+                    document.getElementById('distText').innerText = currentDistance.toFixed(2) + ' km';
+                    document.getElementById('remainText').innerText = currentDistance.toFixed(2) + ' km left';
+
+                    if (currentDistance < 0.1 && currentDistance > 0.03) {
+                        document.getElementById('warnAlert').style.display = 'block';
+                        if (!bleVibrating) {
+                            bleVibrating = true;
+                            sendBLEAlert(true);
+                        }
+                    }
+
+                    if (currentDistance <= 0.03) {
+                        document.getElementById('alertAudio').play();
+                        document.getElementById('warnAlert').innerText = "🏁 ARRIVED!";
+                        document.getElementById('warnAlert').style.display = 'block';
+                        document.getElementById('warnAlert').style.background = "rgba(16, 185, 129, 0.2)";
+                        document.getElementById('warnAlert').style.color = "#10b981";
+                        
+                        if (!bleVibrating) {
+                            bleVibrating = true;
+                            sendBLEAlert(true);
+                        }
+                        
+                        navigator.geolocation.clearWatch(watchId);
+                        watchId = null;
+                    }
+                },
+                (err) => console.error("GPS Watch Error:", err),
+                { enableHighAccuracy: true, maximumAge: 0 }
+            );
         };
 
         exitNavBtn.onclick = async () => {
@@ -623,6 +727,11 @@
             const audio = document.getElementById('alertAudio');
             audio.pause();
             audio.currentTime = 0;
+
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
 
             if (bleVibrating) {
                 bleVibrating = false;
@@ -666,8 +775,10 @@
             document.getElementById('remainText').innerText = '0.00 km left';
 
             // Reset Start Button
-            startBtn.disabled = false;
-            startBtn.innerHTML = '🚀 START NAVIGATION';
+            startDemoBtn.disabled = false;
+            startDemoBtn.innerHTML = '🏎️ DEMO';
+            startRealBtn.disabled = false;
+            startRealBtn.innerHTML = '🌍 START REAL';
             
             // Expand bottom setup sheet automatically
             expandSetup();
