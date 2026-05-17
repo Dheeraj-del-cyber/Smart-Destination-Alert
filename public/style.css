@@ -148,7 +148,7 @@ body {
         width: auto;
         margin: 0;
         pointer-events: auto;
-        max-height: 50vh;
+        max-height: 85vh; /* Increased from 50vh to prevent clipping the Start button on smaller mobile screens */
         overflow-y: auto;
         border-radius: 16px;
         transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
