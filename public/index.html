@@ -714,13 +714,12 @@
                 watchId = null;
             }
 
-            if (bleVibrating) {
-                bleVibrating = false;
-                try {
-                    await sendBLEAlert(false);
-                } catch (e) {
-                    console.log("BLE disconnect/turnoff error:", e);
-                }
+            // ALWAYS force BLE alert off just to be safe!
+            bleVibrating = false;
+            try {
+                await sendBLEAlert(false);
+            } catch (e) {
+                console.log("BLE turnoff error:", e);
             }
             
             // Reset backend state
