@@ -394,7 +394,8 @@
             startSearchBtn.innerHTML = '<span class="spinner" style="display:block"></span>';
             
             try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+                // Restricted search to India for massive accuracy improvement
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=in`);
                 const data = await res.json();
                 
                 if (data && data.length > 0) {
@@ -422,7 +423,8 @@
             searchBtn.innerHTML = '<span class="spinner" style="display:block"></span>';
             
             try {
-                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
+                // Restricted search to India for massive accuracy improvement
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=in`);
                 const data = await res.json();
                 
                 if (data && data.length > 0) {
