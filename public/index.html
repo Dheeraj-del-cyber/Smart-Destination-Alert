@@ -126,10 +126,7 @@
                             <span>🌍</span> <span id="liveGpsText">Live GPS</span>
                         </button>
                     </div>
-                    <button id="manualModeBtn" class="btn btn-outline" style="width: 100%; margin-bottom: 8px;">
-                        <span>📍</span> Pin on Map
-                    </button>
-                    <div id="gpsHelp" class="help-box">
+                    <div id="gpsHelp" class="help-box" style="margin-top: 8px;">
                         GPS requires HTTPS or localhost. Using IP fallback.
                     </div>
                 </div>
@@ -368,7 +365,6 @@
         let destPos = null;
         let userMarker = null;
         let destMarker = null;
-        let isManualMode = false;
         let routingControl = null;
         let routePath = [];
 
@@ -377,7 +373,6 @@
         const destName = document.getElementById('destName');
         const activateGPS = document.getElementById('activateGPS');
         const gpsHelp = document.getElementById('gpsHelp');
-        const manualModeBtn = document.getElementById('manualModeBtn');
         const startDemoBtn = document.getElementById('startDemoBtn');
         const startRealBtn = document.getElementById('startRealBtn');
         const liveGPS = document.getElementById('liveGPS');
@@ -505,45 +500,22 @@
             );
         };
 
-        manualModeBtn.onclick = () => {
-            isManualMode = !isManualMode;
-            manualModeBtn.classList.toggle('active');
-            manualModeBtn.innerHTML = isManualMode ? "<span>📍</span> TAP MAP NOW" : "<span>📍</span> Pin on Map";
-            document.getElementById('map').style.cursor = isManualMode ? "crosshair" : "grab";
-            
-            // Auto collapse bottom sheet to allow full-screen pinning on mobile!
-            if (isManualMode) {
-                document.getElementById('setupView').classList.add('collapsed');
-            }
-        };
-
         // --- Map Interaction & Routing ---
         map.on('click', (e) => {
             const pos = { lat: e.latlng.lat, lng: e.latlng.lng };
             
-            if (isManualMode) {
-                handleLocationUpdate(pos.lat, pos.lng, "Manual Pin");
-                isManualMode = false;
-                manualModeBtn.classList.remove('active');
-                manualModeBtn.innerText = "Change Start Point";
-                document.getElementById('map').style.cursor = "grab";
-                
-                // Auto expand bottom sheet back!
-                expandSetup();
-            } else {
-                destPos = pos;
-                if (destMarker) map.removeLayer(destMarker);
-                destMarker = L.marker([pos.lat, pos.lng], { 
-                    icon: L.divIcon({ className: 'dest-marker', iconSize: [28,28] }) 
-                }).addTo(map);
-                destName.innerText = "Destination Set";
-                
-                if (userPos) calculateRoute();
-                checkReadyToStart();
-                
-                // Auto expand bottom sheet to show routing details!
-                expandSetup();
-            }
+            destPos = pos;
+            if (destMarker) map.removeLayer(destMarker);
+            destMarker = L.marker([pos.lat, pos.lng], { 
+                icon: L.divIcon({ className: 'dest-marker', iconSize: [28,28] }) 
+            }).addTo(map);
+            destName.innerText = "Destination Set";
+            
+            if (userPos) calculateRoute();
+            checkReadyToStart();
+            
+            // Auto expand bottom sheet to show routing details!
+            expandSetup();
         });
 
         function handleLocationUpdate(lat, lng, method) {
