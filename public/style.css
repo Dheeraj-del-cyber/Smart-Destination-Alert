@@ -151,13 +151,15 @@ body {
         max-height: 85vh; /* Increased from 50vh to prevent clipping the Start button on smaller mobile screens */
         display: flex;
         flex-direction: column;
+        overflow: hidden; /* Force bounds containment */
         border-radius: 16px;
         transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease;
     }
 
     #setupContent {
         overflow-y: auto;
-        flex: 1;
+        flex: 1 1 auto;
+        min-height: 0; /* CRITICAL: Allows flex child to shrink, triggering scroll instead of pushing footer */
         padding-right: 4px;
         margin-right: -4px; /* Adjust padding to fit scrollbar smoothly */
     }
