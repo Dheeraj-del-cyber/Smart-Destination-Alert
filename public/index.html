@@ -716,6 +716,7 @@
                         if (!bleVibrating) {
                             bleVibrating = true;
                             sendBLEAlert(true);
+                            document.getElementById('alertAudio').play().catch(e => console.log('Audio play failed:', e));
                         }
                     }
 
@@ -826,6 +827,7 @@
                     if (!bleVibrating) {
                         bleVibrating = true;
                         sendBLEAlert(true);
+                        document.getElementById('alertAudio').play().catch(e => console.log('Audio play failed:', e));
                     }
                 }
 
